@@ -28,13 +28,15 @@ import type { PageId } from "./types";
 function AppShell() {
   const { user } = useAuth();
   const [page, setPage] = useState<PageId>("dashboard");
-  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
+  // CORRECTION : Autorise les types string et number pour les IDs synchronisés SGH
+  const [selectedPatientId, setSelectedPatientId] = useState<string | number | null>(null);
 
   if (!user) return <Login />;
 
   const handleNavigate = (p: PageId, payload?: any) => {
     setPage(p);
-    if (p === "patient-detail" && typeof payload === "number") {
+    // CORRECTION : Suppression du blocage strict "typeof payload === 'number'"
+    if (p === "patient-detail" && payload !== undefined) {
       setSelectedPatientId(payload);
     }
   };

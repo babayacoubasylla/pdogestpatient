@@ -1,0 +1,15 @@
+{
+    "name": "Paracliniques des Oliviers",
+    "short_name": "Clinique",
+    "start_url": "/",
+    "display": "standalone",
+    "theme_color": "#0891b2",
+    "background_color": "#ffffff",
+    "icons": [
+        {
+            "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48Y2lyY2xlIGN4PSI5NiIgY3k9Ijk2IiByPSI5MCIgZmlsbD0iIzA4OTFiMiIvPjxwYXRoIGQ9Ik02MCA5MGg3Mm0tMzYgMjRhMzYgMzYgMCAxIDEgNzIgMGEzNiAzNiAwIDEgMSAtNzIgMHoiIGZpbGw9IndoaXRlIi8+PC9zdmc+",
+            "sizes": "192x192",
+            "type": "image/svg+xml"
+        }
+    ]
+}

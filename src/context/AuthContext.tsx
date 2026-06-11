@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import type { User } from "../types";
-import { USERS_MOCK } from "../data/mockData";
-import { loginStaff, isSupabaseConfigured } from "../services/api";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
 
 interface AuthContextType {
   user: User | null;
@@ -15,24 +14,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   const login = async (username: string, password: string) => {
-    // 1. Tentative via Supabase (table staff + RPC login_staff)
-    if (isSupabaseConfigured) {
-      const supaUser = await loginStaff(username, password);
-      if (supaUser) {
-        setUser(supaUser);
-        return { ok: true };
-      }
-      // Si Supabase est actif mais identifiants invalides → on tente le fallback démo
+    if (!isSupabaseConfigured || !supabase) {
+      return { ok: false, error: "Supabase non configuré. Vérifiez .env" };
     }
 
-    // 2. Fallback : comptes de démonstration
-    const found = USERS_MOCK.find(
-      (u) => u.username === username && u.password === password
-    );
-    if (!found) return { ok: false, error: "Identifiants incorrects" };
-    const { password: _pw, ...safeUser } = found;
-    setUser(safeUser);
-    return { ok: true };
+    try {
+      const { data, error } = await supabase
+        .from("staff")
+        .select("*")
+        .eq("username", username)
+        .eq("password_hash", password)
+        .eq("actif", true)
+        .maybeSingle();
+
+      if (error || !data) {
+        return { ok: false, error: "Identifiants incorrects ou compte désactivé" };
+      }
+
+      // Mise à jour de la dernière connexion
+      await supabase
+        .from("staff")
+        .update({ derniere_connexion: new Date().toISOString() })
+        .eq("id", data.id);
+
+      // Log d'audit
+      await supabase.from("audit_logs").insert({
+        user_role: data.role,
+        user_name: `${data.prenom} ${data.nom}`,
+        action: "connexion",
+        cible_type: "staff",
+        cible_id: data.id.toString(),
+        details: "Connexion réussie",
+      });
+
+      setUser(data as User);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: "Erreur de connexion au serveur" };
+    }
   };
 
   const logout = () => setUser(null);
@@ -46,6 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth doit être utilisé dans AuthProvider");
+  if (!ctx) throw new Error("useAuth doit être dans AuthProvider");
   return ctx;
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { DataProvider } from "./context/DataContext";
@@ -6,6 +7,8 @@ import { ToastContainer } from "./components/NotificationCenter";
 import { Login } from "./pages/Login";
 import { Layout } from "./components/Layout";
 import { Dashboard } from "./pages/Dashboard";
+import { PreEnregistrement } from "./pages/PreEnregistrement";
+import { FluxJour } from "./pages/FluxJour";
 import { Patients } from "./pages/Patients";
 import { PatientDetail } from "./pages/PatientDetail";
 import { Vitals } from "./pages/Vitals";
@@ -13,8 +16,13 @@ import { Alerts } from "./pages/Alerts";
 import { Consultations } from "./pages/Consultations";
 import { Stats } from "./pages/Stats";
 import { UsersAdmin } from "./pages/UsersAdmin";
-import { Integration } from "./pages/Integration";
 import { Archives } from "./pages/Archives";
+import { Integration } from "./pages/Integration";
+import { CarnetDigital } from "./pages/CarnetDigital";
+import { Audit } from "./pages/Audit";
+import { PatientCarnetPublic } from "./pages/PatientCarnetPublic";
+import { ActesSpeciaux } from "./pages/ActesSpeciaux";
+import { RendezVous } from "./pages/RendezVous";
 import type { PageId } from "./types";
 
 function AppShell() {
@@ -24,29 +32,6 @@ function AppShell() {
 
   if (!user) return <Login />;
 
-  const accessible: Record<string, string[]> = {
-    dashboard: ["medecin", "admin"],
-    patients: ["infirmier", "medecin", "admin", "gestionnaire"],
-    "patient-detail": ["infirmier", "medecin", "admin", "gestionnaire"],
-    constantes: ["infirmier", "medecin", "admin"],
-    consultations: ["medecin", "admin"],
-    alertes: ["medecin", "admin"],
-    archives: ["gestionnaire", "admin"],
-    stats: ["admin"],
-    users: ["admin"],
-    integration: ["admin"],
-  };
-
-  let currentPage = page;
-  if (!accessible[page]?.includes(user.role)) {
-    currentPage =
-      user.role === "infirmier"
-        ? "patients"
-        : user.role === "gestionnaire"
-        ? "archives"
-        : "dashboard";
-  }
-
   const handleNavigate = (p: PageId, payload?: any) => {
     setPage(p);
     if (p === "patient-detail" && typeof payload === "number") {
@@ -54,48 +39,73 @@ function AppShell() {
     }
   };
 
-  const renderPage = () => {
-    switch (currentPage) {
-      case "dashboard":
-        return <Dashboard onNavigate={handleNavigate} />;
-      case "patients":
-        return <Patients onNavigate={handleNavigate} />;
-      case "patient-detail":
-        return selectedPatientId ? (
-          <PatientDetail patientId={selectedPatientId} onNavigate={handleNavigate} />
-        ) : (
-          <Patients onNavigate={handleNavigate} />
-        );
-      case "constantes":
-        return <Vitals />;
-      case "alertes":
-        return <Alerts />;
-      case "consultations":
-        return <Consultations onNavigate={handleNavigate} />;
-      case "stats":
-        return <Stats />;
-      case "users":
-        return <UsersAdmin />;
-      case "integration":
-        return <Integration />;
-      case "archives":
-        return <Archives />;
-      default:
-        return <Dashboard onNavigate={handleNavigate} />;
-    }
-  };
-
   return (
     <>
-      <Layout currentPage={currentPage} onNavigate={handleNavigate}>
-        {renderPage()}
+      <Layout currentPage={page} onNavigate={handleNavigate}>
+        <PageRouter page={page} selectedPatientId={selectedPatientId} onNavigate={handleNavigate} />
       </Layout>
       <ToastContainer />
     </>
   );
 }
 
-export default function App() {
+function PageRouter({ page, selectedPatientId, onNavigate }: any) {
+  const { user } = useAuth();
+  if (!user) return null;
+
+  const accessible: Record<string, string[]> = {
+    "dashboard": ["medecin", "admin"],
+    "pre-enregistrement": ["secretaire", "admin"],
+    "actes-speciaux": ["secretaire", "admin", "archiviste"],
+    "flux-jour": ["secretaire", "medecin", "admin", "infirmier", "archiviste"],
+    "patients": ["secretaire", "medecin", "admin", "infirmier", "archiviste"],
+    "patient-detail": ["secretaire", "medecin", "admin", "infirmier", "archiviste"],
+    "carnet-digital": ["medecin", "admin", "archiviste"],
+    "constantes": ["infirmier", "medecin", "admin"],
+    "consultations": ["medecin", "admin"],
+    "alertes": ["medecin", "admin", "infirmier"],
+    "stats": ["admin"],
+    "users": ["admin"],
+    "archives": ["archiviste", "admin", "medecin"],
+    "integration": ["admin"],
+    "audit": ["admin"],
+    "rendez-vous": ["secretaire", "medecin", "admin"],
+  };
+
+  let currentPage = page;
+  if (!accessible[page]?.includes(user.role)) {
+    if (user.role === "secretaire") currentPage = "pre-enregistrement";
+    else if (user.role === "infirmier") currentPage = "flux-jour";
+    else if (user.role === "archiviste") currentPage = "archives";
+    else if (user.role === "medecin") currentPage = "flux-jour";
+    else currentPage = "dashboard";
+  }
+
+  switch (currentPage) {
+    case "dashboard": return <Dashboard onNavigate={onNavigate} />;
+    case "pre-enregistrement": return <PreEnregistrement onNavigate={onNavigate} />;
+    case "actes-speciaux": return <ActesSpeciaux onNavigate={onNavigate} />;
+    case "flux-jour": return <FluxJour onNavigate={onNavigate} />;
+    case "patients": return <Patients onNavigate={onNavigate} />;
+    case "patient-detail":
+      return selectedPatientId
+        ? <PatientDetail patientId={selectedPatientId} onNavigate={onNavigate} />
+        : <Patients onNavigate={onNavigate} />;
+    case "carnet-digital": return <CarnetDigital onNavigate={onNavigate} />;
+    case "constantes": return <Vitals />;
+    case "alertes": return <Alerts />;
+    case "consultations": return <Consultations onNavigate={onNavigate} />;
+    case "stats": return <Stats />;
+    case "users": return <UsersAdmin />;
+    case "archives": return <Archives onNavigate={onNavigate} />;
+    case "integration": return <Integration />;
+    case "audit": return <Audit />;
+    case "rendez-vous": return <RendezVous onNavigate={onNavigate} />;
+    default: return <Dashboard onNavigate={onNavigate} />;
+  }
+}
+
+function AppWithProviders() {
   return (
     <AuthProvider>
       <DataProvider>
@@ -104,5 +114,18 @@ export default function App() {
         </NotificationProvider>
       </DataProvider>
     </AuthProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Route publique : carnet digital accessible via QR code SANS connexion */}
+        <Route path="/public/patient/:nip" element={<PatientCarnetPublic />} />
+        {/* Toutes les autres routes : application clinique authentifiée */}
+        <Route path="/*" element={<AppWithProviders />} />
+      </Routes>
+    </BrowserRouter>
   );
 }

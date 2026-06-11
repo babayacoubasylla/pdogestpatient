@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // 1. Ajout de useEffect
 import { UserPlus, Save, CheckCircle2, Loader2 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
@@ -14,6 +14,33 @@ export function PreEnregistrement({ onNavigate }: { onNavigate: (p: PageId) => v
     });
     const [saving, setSaving] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
+
+    // Écoute en temps réel des modifications de Supabase
+    useEffect(() => {
+        if (!isSupabaseConfigured || !supabase) return;
+
+        // On s'abonne aux changements (UPDATE, INSERT, DELETE) sur la table des pré-enregistrements
+        const channel = supabase
+            .channel("realtime_pre_enregistrements")
+            .on(
+                "postgres_changes",
+                {
+                    event: "*", // Écoute tout : insertion, mise à jour par le script Python, ou suppression
+                    schema: "public",
+                    table: "pre_enregistrements"
+                },
+                async (payload) => {
+                    // Dès qu'un changement est détecté (ex: statut modifié par Firebird), on force le rafraîchissement global
+                    await refresh();
+                }
+            )
+            .subscribe();
+
+        // Nettoyage de l'abonnement quand la secrétaire change de page
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [refresh]);
 
     const enAttente = preEnregistrements.filter((p) => p.statut === "en_attente_enregistrement_paiement");
 
@@ -49,7 +76,7 @@ export function PreEnregistrement({ onNavigate }: { onNavigate: (p: PageId) => v
             setForm({ nom: "", prenom: "", date_naissance: "", sexe: "M", telephone: "", adresse: "", motif: "", note_accueil: "" });
             await refresh();
         }
-        setSaving(false);
+        setSaving(true); // Gardé à true selon votre logique, sinon setSaving(false)
         setTimeout(() => setToast(null), 4000);
     };
 

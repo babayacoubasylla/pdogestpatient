@@ -1,0 +1,24 @@
+# Dépendances
+node_modules/
+
+# Build de production
+dist/
+
+# ⚠️ SECRETS - Ne jamais commiter les clés Supabase !
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# Éditeurs
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+
+# Système
+.DS_Store
+Thumbs.db

@@ -18,7 +18,7 @@ export const isSupabaseConfigured = supabase !== null;
 if (!isSupabaseConfigured) {
   console.warn(
     "⚠️ Supabase non configuré — mode démonstration actif. " +
-      "Remplissez le fichier .env avec votre Project URL."
+    "Remplissez le fichier .env avec votre Project URL."
   );
 } else {
   console.log("✅ Supabase connecté :", url);

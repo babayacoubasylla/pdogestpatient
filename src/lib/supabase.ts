@@ -15,6 +15,9 @@ export const supabase: SupabaseClient | null =
 
 export const isSupabaseConfigured = supabase !== null;
 
+// Mode mock forcé en production si Supabase n'est pas configuré
+export const useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true' || !isSupabaseConfigured;
+
 if (!isSupabaseConfigured) {
   console.warn(
     "⚠️ Supabase non configuré — mode démonstration actif. " +
@@ -22,4 +25,7 @@ if (!isSupabaseConfigured) {
   );
 } else {
   console.log("✅ Supabase connecté :", url);
+  if (import.meta.env.VITE_USE_MOCK_DATA === 'true') {
+    console.warn("⚠️ Mode mock activé manuellement malgré Supabase configuré");
+  }
 }

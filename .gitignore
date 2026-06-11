@@ -1,24 +1,29 @@
-# Dépendances
-node_modules/
+# Dependencies
+node_modules
 
-# Build de production
-dist/
+# Build
+dist
+dist-ssr
 
-# ⚠️ SECRETS - Ne jamais commiter les clés Supabase !
+# Environment files (ne pas committer)
 .env
 .env.local
-.env.production
+.env.*.local
 
 # Logs
+logs
 *.log
 npm-debug.log*
 
-# Éditeurs
-.vscode/*
-!.vscode/extensions.json
-.idea/
-*.swp
-
-# Système
+# OS
 .DS_Store
 Thumbs.db
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Netlify
+.netlify

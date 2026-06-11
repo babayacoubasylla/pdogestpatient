@@ -1,3 +1,7 @@
+// src/data/mockData.ts
+// ⚠️ CE FICHIER N'EST UTILISÉ QU'EN DÉVELOPPEMENT OU SI SUPABASE N'EST PAS CONFIGURÉ
+// En production, les vraies données viennent de Supabase
+
 import type {
   Patient,
   Constante,
@@ -7,6 +11,8 @@ import type {
   StatsJournalieres,
   User,
 } from "../types";
+
+// ============= DONNÉES MOCK (DÉVELOPPEMENT UNIQUEMENT) =============
 
 export const USERS_MOCK: (User & { password: string })[] = [
   {
@@ -193,7 +199,6 @@ function genConst(
 
 export const CONSTANTES: Constante[] = [
   ...Array.from({ length: 12 }, (_, i) => genConst(i + 1, PATIENTS[0], i * 2)),
-  // Une mesure anormale pour générer des alertes
   {
     ...genConst(100, PATIENTS[0], 0),
     tension_systole: 165,
@@ -415,23 +420,26 @@ export const ALERTES: Alerte[] = [
   },
 ];
 
-export const STATS_30J: StatsJournalieres[] = Array.from({ length: 30 }, (_, i) => {
-  const d = new Date();
-  d.setDate(d.getDate() - (29 - i));
-  const weekend = d.getDay() === 0 || d.getDay() === 6;
-  return {
-    date: d.toISOString().slice(0, 10),
-    nb_consultations: weekend ? 12 + (i % 8) : 30 + (i * 7) % 25,
-    nb_constantes: weekend ? 20 + (i % 10) : 55 + (i * 11) % 40,
-    nb_nouveaux_patients: 3 + (i % 7),
-    tension_moyenne_systole: 120 + (i % 10),
-    tension_moyenne_diastole: 75 + (i % 8),
-    pouls_moyen: 72 + (i % 6),
-    temperature_moyenne: 36.6 + ((i % 5) / 10),
-    nb_alertes_critiques: (i * 3) % 5,
-    nb_alertes_warning: 2 + ((i * 5) % 8),
-  };
-});
+export const STATS_30J: StatsJournalieres[] = Array.from(
+  { length: 30 },
+  (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (29 - i));
+    const weekend = d.getDay() === 0 || d.getDay() === 6;
+    return {
+      date: d.toISOString().slice(0, 10),
+      nb_consultations: weekend ? 12 + (i % 8) : 30 + (i * 7) % 25,
+      nb_constantes: weekend ? 20 + (i % 10) : 55 + (i * 11) % 40,
+      nb_nouveaux_patients: 3 + (i % 7),
+      tension_moyenne_systole: 120 + (i % 10),
+      tension_moyenne_diastole: 75 + (i % 8),
+      pouls_moyen: 72 + (i % 6),
+      temperature_moyenne: 36.6 + ((i % 5) / 10),
+      nb_alertes_critiques: (i * 3) % 5,
+      nb_alertes_warning: 2 + ((i * 5) % 8),
+    };
+  }
+);
 
 export const TOP_DIAGNOSTICS = [
   { nom: "Hypertension artérielle", count: 45, couleur: "#ef4444" },

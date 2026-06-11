@@ -5,11 +5,13 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# Redirections pour SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
+# Headers pour les bons types MIME
 [[headers]]
   for = "/assets/*.js"
   [headers.values]

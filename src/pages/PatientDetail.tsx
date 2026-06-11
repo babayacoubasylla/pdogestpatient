@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Save, Heart, AlertTriangle, FileText, BookHeart, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Heart, FileText, BookHeart, Loader2 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { calculerAge } from "../data/mockData";
 import type { PageId, Patient, CarnetDigital } from "../types";
@@ -8,7 +8,8 @@ import { TamponClinique } from "../components/TamponClinique";
 import { SignaturePadComponent } from "../components/SignaturePad";
 import { ExportPdfCarnet } from "../components/ExportPdfCarnet";
 
-export function PatientDetail({ patientId, onNavigate }: { patientId: number; onNavigate: (p: PageId) => void }) {
+// TYPAGE CORRIGÉ : patientId accepte désormais les chaînes de caractères (string)
+export function PatientDetail({ patientId, onNavigate }: { patientId: string | number; onNavigate: (p: PageId) => void }) {
   const { user } = useAuth();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [carnet, setCarnet] = useState<CarnetDigital | null>(null);
@@ -23,22 +24,26 @@ export function PatientDetail({ patientId, onNavigate }: { patientId: number; on
 
   async function load() {
     if (!isSupabaseConfigured || !supabase) { setLoading(false); return; }
+
     const [p, c] = await Promise.all([
       supabase.from("patients").select("*").eq("id", patientId).maybeSingle(),
       supabase.from("carnet_digital").select("*").eq("patient_id", patientId).maybeSingle(),
     ]);
+
     if (p.data) setPatient(p.data as Patient);
+
     if (c.data) {
       setCarnet(c.data as CarnetDigital);
       setForm(c.data as CarnetDigital);
     } else if (p.data) {
-      // Créer le carnet automatiquement s'il n'existe pas
+      // Créer le carnet automatiquement s'il n'existe pas encore
       const { data: newCarnet } = await supabase.from("carnet_digital").insert({
         patient_id: p.data.id,
         nip: p.data.nip,
         allergies: p.data.allergies || "",
         antecedents: p.data.antecedents || "",
       }).select().single();
+
       if (newCarnet) {
         setCarnet(newCarnet as CarnetDigital);
         setForm(newCarnet as CarnetDigital);
@@ -61,7 +66,7 @@ export function PatientDetail({ patientId, onNavigate }: { patientId: number; on
       derniere_mise_a_jour: new Date().toISOString(),
     }).eq("id", carnet.id);
 
-    // Log d'audit
+    // Log d'audit de sécurité
     await supabase.from("audit_logs").insert({
       user_role: user.role,
       user_name: `${user.prenom} ${user.nom}`,
@@ -77,7 +82,7 @@ export function PatientDetail({ patientId, onNavigate }: { patientId: number; on
   }
 
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-cyan-600" /></div>;
-  if (!patient) return <div className="p-6">Patient introuvable</div>;
+  if (!patient) return <div className="p-6 text-center text-slate-500">Patient introuvable (ID: {patientId})</div>;
 
   const age = patient.date_naissance ? calculerAge(patient.date_naissance) : 0;
 
@@ -106,7 +111,7 @@ export function PatientDetail({ patientId, onNavigate }: { patientId: number; on
         </div>
       </div>
 
-      {/* Tampon Clinique */}
+      {/* Tampon Clinique de Consultation */}
       {patient.id && patient.nip && (
         <TamponClinique patientId={patient.id} nip={patient.nip} contexte="consultation" />
       )}
@@ -119,13 +124,13 @@ export function PatientDetail({ patientId, onNavigate }: { patientId: number; on
             Carnet de Santé Digital
           </h2>
           {!editing ? (
-            <button onClick={() => setEditing(true)} className="bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm">
+            <button onClick={() => setEditing(true)} className="bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-cyan-700 transition">
               Modifier
             </button>
           ) : (
             <div className="flex gap-2">
-              <button onClick={() => { setEditing(false); setForm(carnet!); }} className="px-4 py-2 border border-slate-200 rounded-lg text-sm">Annuler</button>
-              <button onClick={saveCarnet} disabled={saving} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50">
+              <button onClick={() => { setEditing(false); setForm(carnet!); }} className="px-4 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50">Annuler</button>
+              <button onClick={saveCarnet} disabled={saving} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50 hover:bg-emerald-700 transition">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Enregistrer
               </button>
@@ -144,7 +149,7 @@ export function PatientDetail({ patientId, onNavigate }: { patientId: number; on
         </div>
 
         {/* Boutons d'action */}
-        <div className="flex gap-2 mt-4 flex-wrap">
+        <div className="flex gap-2 mt-6 flex-wrap border-t border-slate-100 pt-4">
           <TamponClinique patientId={patient.id} nip={patient.nip || ""} contexte="carnet" />
           <SignaturePadComponent patientId={patient.id} nip={patient.nip || ""} typeSignature="patient" contexte="carnet_consultation" />
           <ExportPdfCarnet patient={patient} carnet={carnet} />
@@ -152,7 +157,7 @@ export function PatientDetail({ patientId, onNavigate }: { patientId: number; on
 
         {carnet?.derniere_mise_a_jour && (
           <div className="mt-4 text-xs text-slate-500 flex items-center gap-1">
-            <Heart className="w-3 h-3" />
+            <Heart className="w-3 h-3 text-pink-500 animate-pulse" />
             Dernière mise à jour : {new Date(carnet.derniere_mise_a_jour).toLocaleString("fr-FR")}
           </div>
         )}

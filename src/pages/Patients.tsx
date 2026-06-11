@@ -12,7 +12,13 @@ export function Patients({ onNavigate }: { onNavigate: (p: PageId, payload?: any
 
   const filtered = patients.filter((p) => {
     const q = search.toLowerCase();
-    return !q || p.nom?.toLowerCase().includes(q) || p.prenom?.toLowerCase().includes(q) || p.nip?.toLowerCase().includes(q) || p.telephone?.includes(q);
+    return (
+      !q ||
+      p.nom?.toLowerCase().includes(q) ||
+      p.prenom?.toLowerCase().includes(q) ||
+      p.nip?.toLowerCase().includes(q) ||
+      p.telephone?.includes(q)
+    );
   });
 
   return (
@@ -45,8 +51,13 @@ export function Patients({ onNavigate }: { onNavigate: (p: PageId, payload?: any
             const age = p.date_naissance ? calculerAge(p.date_naissance) : 0;
             const initiales = `${p.prenom?.charAt(0) || ""}${p.nom?.charAt(0) || ""}`;
             const color = p.sexe === "F" ? "bg-pink-100 text-pink-700" : "bg-blue-100 text-blue-700";
+
             return (
-              <button key={p.id} onClick={() => onNavigate("patient-detail", p.id)} className="text-left bg-white rounded-xl border border-slate-200 p-5 hover:shadow-lg hover:border-cyan-300 transition group">
+              <button
+                key={p.id}
+                onClick={() => onNavigate("patient-detail", p.id)}
+                className="text-left bg-white rounded-xl border border-slate-200 p-5 hover:shadow-lg hover:border-cyan-300 transition group"
+              >
                 <div className="flex items-start gap-3">
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold ${color}`}>{initiales}</div>
                   <div className="flex-1 min-w-0">
@@ -55,8 +66,16 @@ export function Patients({ onNavigate }: { onNavigate: (p: PageId, payload?: any
                   </div>
                 </div>
                 <div className="mt-3 space-y-1 text-sm text-slate-600">
-                  <div className="flex items-center gap-2"><User className="w-3.5 h-3.5 text-slate-400" />{age} ans · {p.sexe === "F" ? "F" : "H"}</div>
-                  {p.telephone && <div className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-slate-400" />{p.telephone}</div>}
+                  <div className="flex items-center gap-2">
+                    <User className="w-3.5 h-3.5 text-slate-400" />
+                    {age} ans · {p.sexe === "F" ? "F" : "H"}
+                  </div>
+                  {p.telephone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-3.5 h-3.5 text-slate-400" />
+                      {p.telephone}
+                    </div>
+                  )}
                 </div>
               </button>
             );
